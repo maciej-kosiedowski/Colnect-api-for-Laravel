@@ -1,0 +1,48 @@
+version: 2
+
+updates:
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Warsaw"
+    open-pull-requests-limit: 10
+    versioning-strategy: increase-if-necessary
+    labels:
+      - "dependencies"
+      - "php"
+    commit-message:
+      prefix: "composer"
+      include: "scope"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      laravel:
+        patterns:
+          - "illuminate/*"
+          - "laravel/*"
+          - "orchestra/*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Warsaw"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

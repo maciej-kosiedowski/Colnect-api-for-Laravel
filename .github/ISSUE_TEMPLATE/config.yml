@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/maciej-kosiedowski/Colnect-api-for-Laravel/security/advisories/new
+    about: Report security problems privately, never through a public issue.
+  - name: Core SDK (framework-agnostic)
+    url: https://github.com/maciej-kosiedowski/Colnect-api
+    about: Missing requests, wrong endpoints or signing problems belong in slimad/colnect-api.
+  - name: Colnect API documentation
+    url: https://colnect.com/en/help/capi
+    about: Questions about CAPI itself (keys, quotas, response formats).

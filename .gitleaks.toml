@@ -1,0 +1,11 @@
+title = "gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Files that record scanner findings themselves, not secrets"
+paths = [
+  '''(?:^|/)\.gitleaks-baseline\.json$''',
+  '''(?:^|/)\.secrets\.baseline$''',
+]

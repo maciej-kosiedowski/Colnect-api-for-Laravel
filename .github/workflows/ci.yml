@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSER_ROOT_VERSION: 1.x-dev
+
+jobs:
+  coding-standards:
+    name: Coding standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Run Pint
+        run: vendor/bin/pint --test
+
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Run Larastan
+        run: vendor/bin/phpstan analyse --no-progress --error-format=github
+
+  tests:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} (${{ matrix.dependencies }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Laravel 9.52 is the oldest release that runs on PHP 8.2, the floor of slimad/colnect-api.
+          - { laravel: '9.*', testbench: '7.*', php: '8.2', dependencies: highest }
+          - { laravel: '9.*', testbench: '7.*', php: '8.2', dependencies: lowest }
+          - { laravel: '10.*', testbench: '8.*', php: '8.2', dependencies: highest }
+          - { laravel: '10.*', testbench: '8.*', php: '8.3', dependencies: highest }
+          - { laravel: '11.*', testbench: '9.*', php: '8.2', dependencies: highest }
+          - { laravel: '11.*', testbench: '9.*', php: '8.3', dependencies: highest }
+          - { laravel: '11.*', testbench: '9.*', php: '8.4', dependencies: highest }
+          - { laravel: '12.*', testbench: '10.*', php: '8.2', dependencies: highest }
+          - { laravel: '12.*', testbench: '10.*', php: '8.3', dependencies: highest }
+          - { laravel: '12.*', testbench: '10.*', php: '8.4', dependencies: highest }
+          - { laravel: '12.*', testbench: '10.*', php: '8.5', dependencies: highest }
+          - { laravel: '13.*', testbench: '11.*', php: '8.3', dependencies: highest }
+          - { laravel: '13.*', testbench: '11.*', php: '8.4', dependencies: highest }
+          - { laravel: '13.*', testbench: '11.*', php: '8.5', dependencies: highest }
+          - { laravel: '13.*', testbench: '11.*', php: '8.3', dependencies: lowest }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          ini-values: error_reporting=-1, display_errors=On
+          tools: composer:v2
+
+      # Static analysis and mutation testing have their own jobs on the newest
+      # stack; their tools pin framework versions that older rows cannot install.
+      #
+      # Composer refuses to install releases with known advisories, and every
+      # Laravel 9, 10 and 11 release has some that will never be patched. This
+      # job checks compatibility, not security - the Security workflow audits
+      # the dependencies - so blocking is switched off here only.
+      - name: Pin the framework version
+        run: |
+          composer config --no-interaction policy.advisories.block false
+          composer remove --dev --no-interaction --no-update larastan/larastan phpstan/phpstan-phpunit infection/infection laravel/pint
+          composer require --dev --no-interaction --no-update "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}"
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      # PHPUnit 9 (Laravel 9 rows) warns about the PHPUnit 10+ attributes in
+      # phpunit.xml.dist and ignores them; the run itself is unaffected.
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit --no-coverage
+
+  code-coverage:
+    name: Code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Run PHPUnit with coverage
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=build/clover.xml
+
+      - name: Enforce the coverage threshold
+        run: php bin/check-coverage.php build/clover.xml 100
+
+  mutation-testing:
+    name: Mutation testing
+    runs-on: ubuntu-latest
+    needs: [tests]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+
+      - name: Run Infection
+        run: vendor/bin/infection --threads=max --show-mutations --no-progress
+
+      - name: Upload the Infection report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: infection-report
+          path: build/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [coding-standards, static-analysis, tests, code-coverage, mutation-testing]
+    if: always()
+    steps:
+      - name: Fail if any job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+
+      - name: Success
+        run: echo "All CI jobs passed."
