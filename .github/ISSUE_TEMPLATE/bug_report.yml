@@ -1,0 +1,74 @@
+name: Bug report
+description: Something in the package does not behave as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do **not** paste your CAPI application secret - it is
+        a credential and it is never needed to reproduce a bug.
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel version
+      placeholder: "13.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.4.3"
+    validations:
+      required: true
+
+  - type: input
+    id: cache-store
+    attributes:
+      label: Cache store used for rate limiting
+      placeholder: redis
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the exception message and stack trace if there is one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Your config/colnect.php or COLNECT_* variables, with the secret removed.
+      render: php
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: The shortest snippet that shows the problem. Colnect::fake() makes one easy to share.
+      render: php
+    validations:
+      required: true

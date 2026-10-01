@@ -1,0 +1,110 @@
+{
+    "name": "slimad/colnect-api-laravel",
+    "description": "Laravel integration for the Colnect API (CAPI): configuration, container bindings, a facade, a cache-backed rate limiter shared by every worker, Retry-After aware retries, Artisan commands and test fakes on top of slimad/colnect-api.",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "colnect",
+        "colnect-api",
+        "capi",
+        "saloon",
+        "rate-limiting",
+        "stamps",
+        "coins",
+        "banknotes",
+        "collectibles"
+    ],
+    "authors": [
+        {
+            "name": "Maciej Kosiedowski",
+            "homepage": "https://github.com/maciej-kosiedowski",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/maciej-kosiedowski/Colnect-api-for-Laravel",
+    "support": {
+        "issues": "https://github.com/maciej-kosiedowski/Colnect-api-for-Laravel/issues",
+        "source": "https://github.com/maciej-kosiedowski/Colnect-api-for-Laravel",
+        "security": "https://github.com/maciej-kosiedowski/Colnect-api-for-Laravel/security/policy"
+    },
+    "require": {
+        "php": "^8.2",
+        "illuminate/cache": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/console": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/contracts": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/support": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "saloonphp/saloon": "^3.0",
+        "slimad/colnect-api": "^1.0"
+    },
+    "require-dev": {
+        "infection/infection": "^0.26 || ^0.27 || ^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.33 || ^0.34 || ^0.35",
+        "larastan/larastan": "^2.9 || ^3.0",
+        "laravel/pint": "^1.13",
+        "orchestra/testbench": "^7.40 || ^8.22 || ^9.0 || ^10.0 || ^11.0",
+        "phpstan/phpstan-phpunit": "^1.3 || ^2.0",
+        "phpunit/phpunit": "^9.6 || ^10.5 || ^11.5 || ^12.0 || ^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Slimad\\ColnectApi\\Laravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Slimad\\ColnectApi\\Laravel\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "infection/extension-installer": true,
+            "phpstan/extension-installer": true
+        },
+        "audit": {
+            "ignore": {
+                "CVE-2026-33182": "Saloon 3: an absolute URL in a request endpoint overrides the base URL. Every CAPI endpoint is a relative path built by slimad/colnect-api from validated input. Fixed in Saloon 4, which slimad/colnect-api does not support yet.",
+                "CVE-2026-33183": "Saloon 3: path traversal through fixture names. Neither this package nor slimad/colnect-api uses fixtures.",
+                "CVE-2026-33942": "Saloon 3: insecure deserialization in AccessTokenAuthenticator. CAPI requests are signed with HMAC; no OAuth authenticator is used."
+            }
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.x-dev"
+        },
+        "laravel": {
+            "aliases": {
+                "Colnect": "Slimad\\ColnectApi\\Laravel\\Facades\\Colnect"
+            },
+            "providers": [
+                "Slimad\\ColnectApi\\Laravel\\ColnectServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "ci": [
+            "@cs",
+            "@phpstan",
+            "@test",
+            "@infection"
+        ],
+        "cs": "pint --test",
+        "cs:fix": "pint",
+        "infection": "infection --threads=max",
+        "phpstan": "phpstan analyse",
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-text --coverage-html=build/coverage"
+    },
+    "scripts-descriptions": {
+        "ci": "Runs the full local quality gate: coding standards, static analysis, tests and mutation testing.",
+        "cs": "Checks the coding standards without modifying files.",
+        "cs:fix": "Fixes coding standard violations in place.",
+        "infection": "Runs mutation testing and enforces the configured minimum mutation score.",
+        "phpstan": "Runs Larastan static analysis.",
+        "test": "Runs the PHPUnit test suite against Testbench.",
+        "test:coverage": "Runs the test suite and generates a coverage report."
+    }
+}
