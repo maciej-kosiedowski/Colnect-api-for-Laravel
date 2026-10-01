@@ -30,6 +30,7 @@
     },
     "require": {
         "php": "^8.2",
+        "guzzlehttp/promises": "^1.5 || ^2.0",
         "illuminate/cache": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
         "illuminate/console": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
         "illuminate/contracts": "^9.52 || ^10.0 || ^11.0 || ^12.0 || ^13.0",

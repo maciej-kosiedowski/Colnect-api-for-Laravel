@@ -64,7 +64,7 @@ vendor/bin/phpunit --filter test_a_429_is_retried_after_the_pause_colnect_asked_
   enough — tighten the assertion, or simplify the code until the mutant disappears. Do not lower the
   bar.
 * **Larastan at the maximum level**, no baseline, no `@phpstan-ignore`.
-* **No new runtime dependencies** beyond `illuminate/*`, `saloonphp/saloon` and `slimad/colnect-api`
+* **No new runtime dependencies** beyond `illuminate/*`, `saloonphp/saloon`, `guzzlehttp/promises` and `slimad/colnect-api`
   without discussing it first.
 * **API changes belong in the core SDK.** This repository only holds Laravel glue: configuration,
   container bindings, rate limiting, retries, commands and test helpers.
