@@ -98,8 +98,14 @@ jobs:
 
       # Static analysis and mutation testing have their own jobs on the newest
       # stack; their tools pin framework versions that older rows cannot install.
+      #
+      # Composer refuses to install releases with known advisories, and every
+      # Laravel 9, 10 and 11 release has some that will never be patched. This
+      # job checks compatibility, not security - the Security workflow audits
+      # the dependencies - so blocking is switched off here only.
       - name: Pin the framework version
         run: |
+          composer config --no-interaction policy.advisories.block false
           composer remove --dev --no-interaction --no-update larastan/larastan phpstan/phpstan-phpunit infection/infection laravel/pint
           composer require --dev --no-interaction --no-update "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}"
 
