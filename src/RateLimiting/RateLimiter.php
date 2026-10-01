@@ -167,9 +167,21 @@ final class RateLimiter
         foreach ($this->options->limits as $limit) {
             $key = $this->key($limit->name);
 
-            if ($this->limiter->hit($key, $limit->seconds) > $limit->requests) {
-                return [$limit->name, max(1, $this->limiter->availableIn($key))];
+            if ($this->limiter->hit($key, $limit->seconds) <= $limit->requests) {
+                continue;
             }
+
+            $seconds = $this->limiter->availableIn($key);
+
+            if ($seconds > 0) {
+                return [$limit->name, $seconds];
+            }
+
+            // The window is over, but a store that expires keys a second late
+            // (Laravel 9's array store, for one) still holds the full counter.
+            // Start the next window instead of waiting for nothing.
+            $this->limiter->clear($key);
+            $this->limiter->hit($key, $limit->seconds);
         }
 
         return null;

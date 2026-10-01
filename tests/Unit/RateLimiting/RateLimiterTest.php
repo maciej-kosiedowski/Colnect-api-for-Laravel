@@ -78,16 +78,20 @@ final class RateLimiterTest extends TestCase
         self::assertSame(1, $limiter->usage()[0]['used']);
     }
 
-    public function test_a_wait_never_rounds_down_to_nothing(): void
+    public function test_a_window_whose_time_is_up_starts_over_even_if_the_store_lags(): void
     {
-        $limiter = $this->limiter([new Limit('per_second', 1, 1)], maxWait: 10);
+        $limiter = $this->limiter([new Limit('per_minute', 2, 60)], maxWait: 0);
 
         $limiter->acquire();
-        // The window timer says "now", but the counter has not expired yet.
-        $this->cache->put('colnect-api:per_second:timer', Carbon::now()->getTimestamp(), 1);
+        $limiter->acquire();
+        // The window's timer has run out, but the store has not dropped the
+        // counter yet - as Laravel 9's array store does for a whole second.
+        $this->cache->put('colnect-api:per_minute:timer', Carbon::now()->getTimestamp(), 60);
         $limiter->acquire();
 
-        self::assertSame([1], $this->sleeper->slept);
+        self::assertSame([], $this->sleeper->slept);
+        self::assertSame(1, $limiter->usage()[0]['used'], 'the request counts in the new window');
+        self::assertSame(60, $limiter->usage()[0]['resets_in']);
     }
 
     public function test_every_window_is_respected(): void
@@ -319,7 +323,8 @@ final class RateLimiterTest extends TestCase
         Carbon::setTestNow(Carbon::now()->addSeconds(9));
         self::assertTrue($this->cache->has('colnect-api:retry_after'));
 
-        Carbon::setTestNow(Carbon::now()->addSeconds(1));
+        // One second of slack for stores that expire keys a second late.
+        Carbon::setTestNow(Carbon::now()->addSeconds(2));
         self::assertFalse($this->cache->has('colnect-api:retry_after'));
     }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Slimad\ColnectApi\Laravel\Tests\Feature;
 
 use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Foundation\Console\AboutCommand;
 use Slimad\ColnectApi\ColnectConnector;
 use Slimad\ColnectApi\Laravel\ColnectConnectorFactory;
 use Slimad\ColnectApi\Laravel\ColnectManager;
@@ -22,13 +21,6 @@ use Slimad\ColnectApi\Laravel\Tests\TestCase;
 
 final class ServiceProviderTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        AboutCommand::flushState();
-
-        parent::tearDown();
-    }
-
     public function test_it_merges_the_package_configuration(): void
     {
         self::assertSame(30, $this->config()->get('colnect.http.timeout'));

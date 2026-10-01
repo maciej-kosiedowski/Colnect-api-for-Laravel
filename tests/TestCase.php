@@ -7,9 +7,11 @@ namespace Slimad\ColnectApi\Laravel\Tests;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\PendingCommand;
 use Orchestra\Testbench\TestCase as Orchestra;
+use ReflectionProperty;
 use RuntimeException;
 use Slimad\ColnectApi\Laravel\ColnectServiceProvider;
 use Slimad\ColnectApi\Laravel\Contracts\Sleeper;
@@ -30,6 +32,7 @@ abstract class TestCase extends Orchestra
     protected function setUp(): void
     {
         Carbon::setTestNow(self::NOW);
+        self::forgetAboutSections();
 
         parent::setUp();
     }
@@ -73,6 +76,18 @@ abstract class TestCase extends Orchestra
         // an explicitly bound sleeper instead of its native one.
         $this->sleeper = new FakeSleeper;
         $app->instance(Sleeper::class, $this->sleeper);
+    }
+
+    /**
+     * Sections registered with `php artisan about` are static and would point
+     * at the previous test's container. Reset through reflection, because
+     * Laravel 9 has no AboutCommand::flushState() yet.
+     */
+    private static function forgetAboutSections(): void
+    {
+        foreach (['data', 'customDataResolvers'] as $property) {
+            (new ReflectionProperty(AboutCommand::class, $property))->setValue(null, []);
+        }
     }
 
     protected function container(): Application

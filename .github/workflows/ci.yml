@@ -108,6 +108,8 @@ jobs:
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
+      # PHPUnit 9 (Laravel 9 rows) warns about the PHPUnit 10+ attributes in
+      # phpunit.xml.dist and ignores them; the run itself is unaffected.
       - name: Run PHPUnit
         run: vendor/bin/phpunit --no-coverage
 
